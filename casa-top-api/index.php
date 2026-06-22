@@ -3,6 +3,7 @@
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
+
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
@@ -78,7 +79,9 @@ $app->get('[/]', function (Request $request, Response $response){
     return $response->withHeader('Content-Type', 'text/html')->withStatus(200);
 });
 
-// Función de conexión a la Base de Datos con PDO (Configurada para Filess.io)
+// -------------------------------------------------------------------------
+// FUNCIÓN DE CONEXIÓN A LA BASE DE DATOS (PDO - FILESS.IO)
+// -------------------------------------------------------------------------
 function getDB() {
     $dbhost = "tub4sx.h.filess.io"; 
     $dbuser = "casa_top_db_paragraph";
@@ -86,7 +89,6 @@ function getDB() {
     $dbname = "casa_top_db_paragraph";
     $dbport = "3306"; 
     
-    // Agregamos la variable $dbport a la cadena de conexión de forma explícita
     $mysql_conn_string = "mysql:host=$dbhost;port=$dbport;dbname=$dbname;charset=utf8mb4";
     
     $dbConnection = new PDO($mysql_conn_string, $dbuser, $dbpass);
@@ -95,25 +97,27 @@ function getDB() {
 }
 
 // -------------------------------------------------------------------------
-// a. POST: Adicionar un nuevo Vehiculo
+// 1. MÓDULO DE VEHÍCULOS
 // -------------------------------------------------------------------------
+
+// POST: Adicionar un nuevo Vehículo
 $app->post('/api/vehiculos', function (Request $request, Response $response) {
     $data = $request->getParsedBody();
     
-    $sql = "INSERT INTO Vehiculos (Placa, ModeloVehiculo, Color, AnioFabricacion, Kilometraje, PrecioOriginal, IdMarca) 
-            VALUES (:Placa, :ModeloVehiculo, :Color, :AnioFabricacion, :Kilometraje, :PrecioOriginal, :IdMarca)";
+    $sql = "INSERT INTO vehiculos (placa, modeloVehiculo, color, anioFabricacion, kilometraje, precioOriginal, idMarca) 
+            VALUES (:placa, :modeloVehiculo, :color, :anioFabricacion, :kilometraje, :precioOriginal, :idMarca)";
             
     try {
         $db = getDB();
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':Placa'          => $data['Placa'],
-            ':ModeloVehiculo' => $data['ModeloVehiculo'],
-            ':Color'          => $data['Color'],
-            ':AnioFabricacion'=> $data['AnioFabricacion'],
-            ':Kilometraje'    => $data['Kilometraje'],
-            ':PrecioOriginal' => $data['PrecioOriginal'],
-            ':IdMarca'        => $data['IdMarca']
+            ':placa'           => $data['placa'],
+            ':modeloVehiculo'  => $data['modeloVehiculo'],
+            ':color'           => $data['color'],
+            ':anioFabricacion' => $data['anioFabricacion'],
+            ':kilometraje'     => $data['kilometraje'],
+            ':precioOriginal'  => $data['precioOriginal'],
+            ':idMarca'         => $data['idMarca']
         ]);
         
         $payload = json_encode(["status" => "success", "message" => "Vehículo registrado con éxito"]);
@@ -126,11 +130,9 @@ $app->post('/api/vehiculos', function (Request $request, Response $response) {
     }
 });
 
-// -------------------------------------------------------------------------
-// b. GET: Recuperar todos los Vehiculos
-// -------------------------------------------------------------------------
+// GET: Recuperar todos los Vehículos
 $app->get('/api/vehiculos', function (Request $request, Response $response) {
-    $sql = "SELECT * FROM Vehiculos";
+    $sql = "SELECT * FROM vehiculos";
     try {
         $db = getDB();
         $stmt = $db->query($sql);
@@ -139,28 +141,32 @@ $app->get('/api/vehiculos', function (Request $request, Response $response) {
         $response->getBody()->write(json_encode($vehiculos));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
     } catch(PDOException $e) {
-        $response->getBody()->write(json_encode(["status" => "error", "message" => $e->getMessage()]));
+        $payload = json_encode(["status" => "error", "message" => $e->getMessage()]);
+        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
 });
 
+
 // -------------------------------------------------------------------------
-// c. POST: Adicionar una nueva Marca de Vehiculo
+// 2. MÓDULO DE MARCAS
 // -------------------------------------------------------------------------
+
+// POST: Adicionar una nueva Marca de Vehículo
 $app->post('/api/marcas', function (Request $request, Response $response) {
     $data = $request->getParsedBody();
     
-    $sql = "INSERT INTO MarcasVehiculos (IdMarca, DescripMarca, PaisMarca, SitioWebOficial) 
-            VALUES (:IdMarca, :DescripMarca, :PaisMarca, :SitioWebOficial)";
+    $sql = "INSERT INTO marcas (idMarca, descripMarca, paisMarca, sitioWeb) 
+            VALUES (:idMarca, :descripMarca, :paisMarca, :sitioWeb)";
             
     try {
         $db = getDB();
         $stmt = $db->prepare($sql);
         $stmt->execute([
-            ':IdMarca'         => $data['IdMarca'],
-            ':DescripMarca'    => $data['DescripMarca'],
-            ':PaisMarca'       => $data['PaisMarca'],
-            ':SitioWebOficial' => $data['SitioWebOficial'] ?? null
+            ':idMarca'      => $data['idMarca'],
+            ':descripMarca' => $data['descripMarca'],
+            ':paisMarca'    => $data['paisMarca'],
+            ':sitioWeb'     => $data['sitioWeb'] ?? null
         ]);
         
         $payload = json_encode(["status" => "success", "message" => "Marca registrada con éxito"]);
@@ -173,12 +179,27 @@ $app->post('/api/marcas', function (Request $request, Response $response) {
     }
 });
 
-// -------------------------------------------------------------------------
-// d. GET: Recuperar una Marca de Vehículo en específico
-// -------------------------------------------------------------------------
+// GET: Recuperar todas las Marcas
+$app->get('/api/marcas', function (Request $request, Response $response) {
+    $sql = "SELECT * FROM marcas";
+    try {
+        $db = getDB();
+        $stmt = $db->query($sql);
+        $marcas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $response->getBody()->write(json_encode($marcas));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
+    } catch(PDOException $e) {
+        $payload = json_encode(["status" => "error", "message" => $e->getMessage()]);
+        $response->getBody()->write($payload);
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
+    }
+});
+
+// GET: Recuperar una Marca específica por su ID
 $app->get('/api/marcas/{id}', function (Request $request, Response $response, array $args) {
     $idMarca = $args['id'];
-    $sql = "SELECT * FROM MarcasVehiculos WHERE IdMarca = :id";
+    $sql = "SELECT * FROM marcas WHERE idMarca = :id";
     
     try {
         $db = getDB();
@@ -190,11 +211,13 @@ $app->get('/api/marcas/{id}', function (Request $request, Response $response, ar
             $response->getBody()->write(json_encode($marca));
             return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
         } else {
-            $response->getBody()->write(json_encode(["status" => "error", "message" => "Marca no encontrada"]));
+            $payload = json_encode(["status" => "error", "message" => "Marca no encontrada"]);
+            $response->getBody()->write($payload);
             return $response->withHeader('Content-Type', 'application/json')->withStatus(404);
         }
     } catch(PDOException $e) {
-        $response->getBody()->write(json_encode(["status" => "error", "message" => $e->getMessage()]));
+        $payload = json_encode(["status" => "error", "message" => $e->getMessage()]);
+        $response->getBody()->write($payload);
         return $response->withHeader('Content-Type', 'application/json')->withStatus(500);
     }
 });
