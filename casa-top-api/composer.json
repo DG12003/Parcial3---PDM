@@ -1,0 +1,22 @@
+{
+    "name": "carlosalex/casa-top-api",
+    "description": "Parcial3PDM",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Carlosalex\\CasaTopApi\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "DG12003",
+            "email": "dg12003@ues.edu.sv"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {
+        "slim/slim": "4.*",
+        "slim/psr7": "dev-main"
+    }
+}
